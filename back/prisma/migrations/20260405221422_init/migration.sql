@@ -1,0 +1,4 @@
+-- CreateTable
+CREATE TABLE "sla" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT
+);
