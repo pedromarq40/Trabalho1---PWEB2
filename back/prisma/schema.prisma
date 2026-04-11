@@ -22,6 +22,7 @@ model Paciente {
   peso             Decimal?
   dataDeNascimento DateTime?
   dataCriacao      DateTime @default(now())
+  senha            String
 }
 
 model Medico{
@@ -33,6 +34,7 @@ model Medico{
   especializacao   String
   dataDeNascimento DateTime
   dataCriacao      DateTime @default(now())
+  senha            String
 }
 
 model Atendimento{
