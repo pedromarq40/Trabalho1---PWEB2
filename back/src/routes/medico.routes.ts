@@ -28,7 +28,7 @@ medicoRouter.get('/:id', async (req: Request, res: Response) => {
     }
 })
 
-medicoRouter.post('', async (req: Request, res: Response) => {
+medicoRouter.post('/', async (req: Request, res: Response) => {
     try{
         const data = req.body
         await prisma.medico.create({data: data})
