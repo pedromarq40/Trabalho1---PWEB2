@@ -1,21 +1,31 @@
-# Trabalho 1 — PWEB2
+# MedSync - Plataforma de Gestão Médica
+
+**Trabalho 1 — PWEB2**
 
 **Alunos:**
 * Bruno Gabriel Silva de Sena
 * Pedro Marques dos Santos Lima
 * Victor Miguel da Silva Bezerra
 
-Projeto acadêmico dividido em Frontend (React) e Backend (Node.js, Express, Prisma e SQLite).
+## 📋 Sobre o Projeto
 
----
+MedSync é uma plataforma web full-stack para gestão de atendimento médico, desenvolvida como projeto acadêmico. O sistema permite o cadastro e gerenciamento de pacientes e médicos, facilitando a conexão entre profissionais de saúde e seus pacientes.
 
-## 🚀 Como rodar o projeto
+**Tecnologias:** React, Node.js, Express, Prisma, SQLite, TypeScript, Tailwind CSS
+
+## 📚 Documentação
+
+- **[Instalação e Configuração](docs/SETUP.md)** - Guia completo para setup do projeto
+- **[Arquitetura do Sistema](docs/ARCHITECTURE.md)** - Visão técnica da arquitetura
+- **[Funcionalidades](docs/FEATURES.md)** - Recursos implementados e planejados
+- **[API](docs/API.md)** - Documentação dos endpoints REST
+- **[Banco de Dados](docs/DATABASE.md)** - Esquema e modelos de dados
+
+## 🚀 Como Executar
 
 Para executar a aplicação localmente, você precisará abrir **dois terminais** na pasta raiz do projeto (um terminal para rodar o back e outro para o front).
 
-### 🖥️ Terminal 1: Preparando e rodando o Backend
-Execute os comandos abaixo na ordem exata para entrar na pasta, copiar as variáveis de ambiente, instalar dependências, gerar o banco SQLite e ligar a API:
-
+### 🖥️ Terminal 1: Backend
 ```bash
 cd back
 cp .env.example .env
@@ -24,11 +34,27 @@ npx prisma migrate dev
 npm run dev
 ```
 
-### 🎨 Terminal 2: Preparando e rodando o Frontend
-Abra um novo terminal (também na raiz do repositório) e execute a sequência abaixo para preparar as variáveis e ligar a interface em React:
-
+### 🎨 Terminal 2: Frontend
 ```bash
 cd front
 npm install
 npm run dev
 ```
+
+**URLs:**
+- Frontend: http://localhost:5173
+- Backend: http://localhost:3000
+
+## 📁 Estrutura do Projeto
+
+```
+projeto_pweb2/
+├── back/                 # Backend Node.js/Express
+├── front/                # Frontend React/Vite
+├── docs/                 # Documentação
+└── README.md
+```
+
+## 🤝 Contribuição
+
+Este é um projeto acadêmico. Para sugestões ou melhorias, consulte a documentação ou abra uma issue.
