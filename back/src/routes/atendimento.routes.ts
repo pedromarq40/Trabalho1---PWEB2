@@ -18,15 +18,14 @@ atendimentoRouter.get('/:id', async(req : Request<{ id : string}>, res : Respons
     try{
         const id = parseInt(req.params.id)
         const response = await prisma.atendimento.findUnique({where : { id : id}})
-        if(!response){
-            throw new Error()
-        }
+        if(!response) throw new Error()
         res.status(200).json(response)
     }catch(error){
         const response = {
             mensagem : "Erro ao tentar encontrar médico",
             error : error
         }
+        console.error(error)
         res.status(404).json(response)
     }
 })
@@ -42,6 +41,24 @@ atendimentoRouter.post('/',  async (req : Request, res : Response ) => {
             erro: error
         }
         res.status(404).json(response)
+    }
+})
+
+atendimentoRouter.patch('/:id', async ( req : Request<{id : string}>, res : Response) => {
+    try{
+        const id = parseInt(req.params.id)
+        await prisma.atendimento.update({
+            where : { id : id},
+            data : req.body
+        })
+        res.status(200).json({mensagem : "Atendimento atualizado com sucesso"})
+    }catch(error){
+        const response = {
+            mensagem : "Erro ao atualizar atendimento",
+            error : error
+        }
+        res.status(404).json(response)
+        console.error(error)
     }
 })
 

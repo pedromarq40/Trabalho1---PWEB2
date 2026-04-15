@@ -35,8 +35,25 @@ pacienteRouter.post('/', async (req: Request, res: Response) => {
         res.status(201).json({mensagem: "Paciente criado com sucesso"})
     }
     catch(error){
-        console.error(error)
         res.status(500).json({error: "erro ao tentar criar novo usuário"})
+    }
+})
+
+pacienteRouter.patch('/:id', async ( req : Request<{id : string}>, res : Response) => {
+    try{
+        const id = parseInt(req.params.id)
+        await prisma.paciente.update({
+            where : { id : id},
+            data : req.body
+        })
+        res.status(200).json({mensagem : "Paciente atualizado com sucesso"})
+    }catch(error){
+        const response = {
+            mensagem : "Erro ao atualizar paciente",
+            error : error
+        }
+        res.status(404).json(response)
+        console.error(error)
     }
 })
 

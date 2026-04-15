@@ -40,4 +40,22 @@ medicoRouter.post('/', async (req: Request, res: Response) => {
     }
 })
 
+medicoRouter.patch('/:id', async ( req : Request<{id : string}>, res : Response) => {
+    try{
+        const id = parseInt(req.params.id)
+        await prisma.medico.update({
+            where : { id : id},
+            data : req.body
+        })
+        res.status(200).json({mensagem : "Médico atualizado com sucesso"})
+    }catch(error){
+        const response = {
+            mensagem : "Erro ao atualizar médico",
+            error : error
+        }
+        res.status(404).json(response)
+        console.error(error)
+    }
+})
+
 export default medicoRouter
