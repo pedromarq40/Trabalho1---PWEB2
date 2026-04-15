@@ -13,32 +13,37 @@ datasource db {
 }
 
 model Paciente {
-  id               Int      @id @default(autoincrement())
-  nome             String   
-  cpf              String   @unique
-  email            String   @unique
-  telefone         BigInt?   @unique
-  altura           Decimal?    
+  id               Int           @id @default(autoincrement())
+  nome             String
+  cpf              String        @unique
+  email            String        @unique
+  telefone         String?       @unique
+  altura           Decimal?
   peso             Decimal?
   dataDeNascimento DateTime?
-  dataCriacao      DateTime @default(now())
+  dataCriacao      DateTime      @default(now())
   senha            String
+  atendimentos     Atendimento[]
 }
 
-model Medico{
-  id               Int       @id @default(autoincrement())
-  nome             String 
+model Medico {
+  id               Int           @id @default(autoincrement())
+  nome             String
   email            String
   cpf              String
   telefone         String
   especializacao   String
   dataDeNascimento DateTime
-  dataCriacao      DateTime @default(now())
+  dataCriacao      DateTime      @default(now())
   senha            String
+  atendimentos     Atendimento[]
 }
 
-model Atendimento{
+model Atendimento {
   id         Int      @id @default(autoincrement())
-  medicoId   Int
+  medicoId   Int 
   pacienteId Int
+  prescricao String 
+  medico     Medico   @relation(fields: [medicoId], references: [id])
+  paciente   Paciente @relation(fields: [pacienteId], references: [id])
 }
