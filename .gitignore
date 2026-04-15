@@ -10,6 +10,8 @@ node_modules/
 
 # Banco de Dados (SQLite) e Prisma
 dev.db
+\dev.db
+.\back\dev.db
 dev.db-journal
 /src/generated/prisma
 

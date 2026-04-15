@@ -10,5 +10,5 @@ app.use(cors())
 app.use(router)
 
 app.listen(PORT, () => {
-    console.log(`Teu server ta rodando ai chefe, toma o link: https://localhost:${PORT}`)
+    console.log(`Teu server ta rodando ai chefe, toma o link: http://localhost:${PORT}`)
 })
