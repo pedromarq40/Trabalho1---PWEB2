@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../service/api'
 
 interface CadastroPaciente{
@@ -13,6 +14,7 @@ interface CadastroPaciente{
 }
 
 export default function CadastroPaciente() {
+    const navigate = useNavigate()
     const [dadosPaciente, setDadosPaciente] = useState<CadastroPaciente>({
         nome: "", cpf: "", email: "", telefone: "", altura: "", peso: "",
         dataDeNascimento: "", senha: ""
@@ -44,17 +46,22 @@ export default function CadastroPaciente() {
             const response = await api.post("/paciente/", dadosPaciente)
             if(response.data.error){
                 console.error(response.data.error)
+                setStatus('error')
+                setErrorMessage(response.data.error)
             }
             else{
                 console.log(response.data.mensagem)
                 alert(response.data.mensagem)
+                setStatus('success')
             }
         }
         catch(error: any){
+            setStatus('error')
             if(error.response){
-                throw error.response.data
+                setErrorMessage(error.response.data.error || "Erro no cadastro")
+            } else {
+                setErrorMessage("Erro inesperado ao tentar submeter formulário")
             }
-            throw new Error("Erro inesperado ao tentar submeter formulário")
         }
     }
 
@@ -188,12 +195,21 @@ export default function CadastroPaciente() {
                                 <p className="text-sm font-semibold text-rose-300">{errorMessage}</p>
                             )}
                         </div>
-                        <button
-                            type="submit"
-                            className="inline-flex items-center justify-center rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-950 transition hover:bg-sky-400"
-                        >
-                            Criar cadastro
-                        </button>
+                        <div className="flex gap-4">
+                            <button
+                                type="button"
+                                onClick={() => navigate('/login-paciente')}
+                                className="inline-flex items-center justify-center rounded-full bg-slate-700/80 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-slate-600/95"
+                            >
+                                Já tem conta? Faça login
+                            </button>
+                            <button
+                                type="submit"
+                                className="inline-flex items-center justify-center rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-950 transition hover:bg-sky-400"
+                            >
+                                Criar cadastro
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
