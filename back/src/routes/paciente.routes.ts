@@ -1,8 +1,10 @@
 import { Router } from 'express'
 import { type Request, type Response } from 'express';   
 import prisma from '../db/prisma'
+import bcrypt from 'bcrypt'
 
 const pacienteRouter = Router()
+const saltRound : number = 10
 
 pacienteRouter.get('/', async (req: Request, res: Response) => {
     try{
@@ -31,6 +33,8 @@ pacienteRouter.get('/:id', async (req: Request<{id : string}>, res: Response) =>
 pacienteRouter.post('/', async (req: Request, res: Response) => {
     try{
         const data = req.body
+        const senhaHash = await bcrypt.hash(data.senha, saltRound)
+        data.senha = senhaHash
         await prisma.paciente.create({data:data})
         res.status(201).json({mensagem: "Paciente criado com sucesso"})
     }

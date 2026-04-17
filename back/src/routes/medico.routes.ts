@@ -1,8 +1,10 @@
 import { Router } from 'express'
 import { type Request, type Response } from 'express'
 import prisma from '../db/prisma'
+import bcrypt from 'bcrypt'
 
 const medicoRouter = Router()
+const saltRound : number = 10
 
 medicoRouter.get("/", async (req: Request, res: Response) => {
     try{
@@ -31,6 +33,8 @@ medicoRouter.get('/:id', async (req: Request, res: Response) => {
 medicoRouter.post('/', async (req: Request, res: Response) => {
     try{
         const data = req.body
+        const senhaHash = await bcrypt.hash(data.senha, saltRound)
+        data.senha = senhaHash
         await prisma.medico.create({data: data})
         res.status(200).json({mensagem: "Médico criado com sucesso"})
     }
