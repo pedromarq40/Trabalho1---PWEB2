@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { type Request, type Response } from 'express'
 import prisma from '../db/prisma'
+import { Prisma } from '@prisma/client'
 import bcrypt from 'bcrypt'
 
 const medicoRouter = Router()
@@ -10,13 +11,11 @@ medicoRouter.get("/", async (req: Request, res: Response) => {
     try{
         const medicos = await prisma.medico.findMany()
         res.status(200).json(medicos)
-    }
-    catch(error){
+    }catch(error){
         console.error(error)
-        res.status(500).json({error: "Erro ao tentar acessar todos os médicos"}
-        )
-    }
-})
+        res.status(500).json({error: "Erro ao tentar buscar médicos"})
+    } 
+})    
 
 medicoRouter.get('/:id', async (req: Request, res: Response) => {
     try{
@@ -38,9 +37,15 @@ medicoRouter.post('/', async (req: Request, res: Response) => {
         await prisma.medico.create({data: data})
         res.status(200).json({mensagem: "Médico criado com sucesso"})
     }
-    catch(error){
+    catch(error : any){
+        if ( error.code === 'P2002'){
+            return res.status(409).json({erorr : "Já existe cpf ou email cadastrado"})
+        }
+        if (error.message && error.message.includes('PrismaClientValidationError')){
+            return res.status(400).json({error : "Dados inválidos ou campos faltando"})
+        }
         console.error(error)
-        res.status(500).json({error: "Erro ao tentar criar novo médico"})
+        return res.status(500).json({ error: "Erro interno ao tentar criar novo médico" })
     }
 })
 
