@@ -1,8 +1,11 @@
 import { Router } from 'express'
 import { type Request, type Response } from 'express';   
 import prisma from '../db/prisma'
+import bcrypt from 'bcrypt'
+import { Prisma } from '@prisma/client'
 
 const pacienteRouter = Router()
+const saltRound : number = 10
 
 pacienteRouter.get('/', async (req: Request, res: Response) => {
     try{
@@ -10,7 +13,6 @@ pacienteRouter.get('/', async (req: Request, res: Response) => {
         res.status(200).json(pacientes) 
     }
     catch(error){
-        console.error(error)
         res.status(500).json({error: "erro ao tentar listar pacientes"})
     }
 })
@@ -23,19 +25,28 @@ pacienteRouter.get('/:id', async (req: Request<{id : string}>, res: Response) =>
         res.status(200).json(paciente)
     }
     catch(error){
-        console.error(error)
-        res.status(500).json({error: "Erro ao tentar buscar paciente"})
+        res.status(500).json({error: "erro ao tentar listar paciente"})
     }
 })
 
 pacienteRouter.post('/', async (req: Request, res: Response) => {
     try{
         const data = req.body
+        const senhaHash = await bcrypt.hash(data.senha, saltRound)
+        data.senha = senhaHash
+        //if (data.dataDeNascimento) {data.dataDeNascimento = new Date(data.dataDeNascimento).toISOString()}
         await prisma.paciente.create({data:data})
         res.status(201).json({mensagem: "Paciente criado com sucesso"})
     }
-    catch(error){
-        res.status(500).json({error: "erro ao tentar criar novo usuário"})
+    catch(error : any){
+        if ( error.code === 'P2002'){
+            return res.status(409).json({error : "Este CPF ou Email já está cadastrado!"})
+        }
+        if (error.message && error.message.includes('PrismaClientValidationError')){
+            return res.status(400).json({error : "Dados inválidos ou campos faltando"})
+        }
+        console.error(error)
+        return res.status(500).json({ error: "Erro interno ao tentar criar novo paciente" })
     }
 })
 
