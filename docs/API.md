@@ -2,26 +2,75 @@
 
 **Base URL:** `http://localhost:3000`
 
-## Pacientes
+## 📋 Visão Geral
 
-| Método | Endpoint | Descrição | Exemplo |
-|--------|----------|-----------|---------|
-| GET | `/paciente/` | Lista todos os pacientes | `[]` |
-| GET | `/paciente/:id` | Busca paciente por ID | `{id:1, nome:"João"}` |
-| POST | `/paciente/` | Cria novo paciente | `{"nome":"João", "cpf":"123"}` |
+A API MedSync fornece endpoints seguindo padrão REST para gerenciamento de pacientes, médicos, autenticação e atendimentos. Todas as requisições e respostas utilizam JSON.
 
-## Médicos
+## 🔐 Autenticação
 
-| Método | Endpoint | Descrição | Exemplo |
-|--------|----------|-----------|---------|
-| GET | `/medico/` | Lista todos os médicos | `[]` |
-| GET | `/medico/:id` | Busca médico por ID | `{id:1, nome:"Dr. Maria"}` |
-| POST | `/medico/` | Cria novo médico | `{"nome":"Dr. Maria", "especializacao":"Cardiologia"}` |
+Atualmente implementada com bcrypt para hash de senhas. JWT está em desenvolvimento.
 
-## Códigos de Status
-- `200`: Sucesso
-- `201`: Criado
-- `500`: Erro
+### Sentinelas de Status
+- `200`: Sucesso em GET/POST/PATCH
+- `201`: Criado com sucesso
+- `400`: Dados inválidos
+- `401`: Não autenticado / Credenciais inválidas
+- `409`: Conflito (CPF/Email já cadastrado)
+- `404`: Não encontrado
+- `500`: Erro interno do servidor
+
+---
+
+## 👥 Pacientes
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/paciente/` | Lista todos os pacientes |
+| GET | `/paciente/:id` | Busca paciente por ID |
+| POST | `/paciente/` | Cria novo paciente |
+| PATCH | `/paciente/:id` | Atualiza dados do paciente |
+
+### POST `/paciente/` - Criar Paciente
+
+**Request:**
+```json
+{
+  "nome": "João Silva",
+  "cpf": "12345678900",
+  "email": "joao@email.com",
+  "telefone": "11987654321",
+  "altura": 1.75,
+  "peso": 80,
+  "dataDeNascimento": "1990-05-10",
+  "senha": "password123"
+}
+```
+
+**Response (201):**
+```json
+{
+  "mensagem": "Paciente criado com sucesso"
+}
+```
+
+**Error Responses:**
+- `409`: `{"error": "Este CPF ou Email já está cadastrado!"}`
+- `400`: `{"error": "Dados inválidos ou campos faltando"}`
+
+---
+
+## 👨‍⚕️ Médicos
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/medico/` | Lista todos os médicos |
+| GET | `/medico/:id` | Busca médico por ID |
+| POST | `/medico/` | Cria novo médico |
+| PATCH | `/medico/:id` | Atualiza dados do médico |
+
+### POST `/medico/` - Criar Médico
+
+**Request:**
 ```json
 {
   "nome": "Dr. Maria Santos",
@@ -34,26 +83,167 @@
 }
 ```
 
-**Resposta de Sucesso (200):**
+**Response (200):**
 ```json
 {
   "mensagem": "Médico criado com sucesso"
 }
 ```
 
-## Códigos de Status
+**Error Responses:**
+- `409`: `{"error": "Já existe cpf ou email cadastrado"}`
+- `400`: `{"error": "Dados inválidos ou campos faltando"}`
 
-- `200`: Sucesso
-- `201`: Criado com sucesso
-- `500`: Erro interno do servidor
+---
 
-## Autenticação
+## 🔐 Login
 
-Atualmente, a API não implementa autenticação. As senhas são armazenadas em texto plano (não recomendado para produção).
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/login/paciente` | Autentica um paciente |
+| POST | `/login/medico` | Autentica um médico |
 
-## Próximas Implementações
+### POST `/login/paciente` - Login de Paciente
 
-- Autenticação JWT
-- Validação de entrada
-- Endpoints para atendimentos
-- Middleware de autenticação
+**Request:**
+```json
+{
+  "email": "joao@email.com",
+  "senha": "password123"
+}
+```
+
+**Response (200) - Sucesso:**
+```json
+{
+  "mensagem": "Login Efetuado com Sucesso!"
+}
+```
+
+**Response (401) - Erro:**
+```json
+{
+  "error": "Email Errado!"
+}
+```
+ou
+```json
+{
+  "mensagem": "Senha Errada!"
+}
+```
+
+### POST `/login/medico` - Login de Médico
+
+Mesmo formato do paciente, apenas muda o endpoint para `/login/medico`
+
+---
+
+## 📅 Atendimentos
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/atendimento/` | Lista todos os atendimentos |
+| GET | `/atendimento/:id` | Busca atendimento por ID |
+| POST | `/atendimento/` | Cria novo atendimento |
+| PATCH | `/atendimento/:id` | Atualiza atendimento |
+
+### GET `/atendimento/`
+
+**Response (200):**
+```json
+[
+  {
+    "id": 1,
+    "medicoId": 1,
+    "pacienteId": 1,
+    "prescricao": "Repouso completo por 7 dias"
+  }
+]
+```
+
+### POST `/atendimento/` - Criar Atendimento
+
+**Request:**
+```json
+{
+  "medicoId": 1,
+  "pacienteId": 1,
+  "prescricao": "Tomar medicação X duas vezes ao dia"
+}
+```
+
+**Response (200):**
+```json
+{
+  "mensagem": "Atendimento criado com sucesso!"
+}
+```
+
+### PATCH `/atendimento/:id` - Atualizar Atendimento
+
+**Request:**
+```json
+{
+  "prescricao": "Medicação atualizada: Tomar uma vez ao dia"
+}
+```
+
+**Response (200):**
+```json
+{
+  "mensagem": "Atendimento atualizado com sucesso"
+}
+```
+
+---
+
+## 📝 Exemplos com cURL
+
+### Criar Paciente
+```bash
+curl -X POST http://localhost:3000/paciente/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "João Silva",
+    "cpf": "12345678900",
+    "email": "joao@email.com",
+    "telefone": "11987654321",
+    "altura": 1.75,
+    "peso": 80,
+    "dataDeNascimento": "1990-05-10",
+    "senha": "password123"
+  }'
+```
+
+### Login de Paciente
+```bash
+curl -X POST http://localhost:3000/login/paciente \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "joao@email.com",
+    "senha": "password123"
+  }'
+```
+
+### Criar Atendimento
+```bash
+curl -X POST http://localhost:3000/atendimento/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "medicoId": 1,
+    "pacienteId": 1,
+    "prescricao": "Repouso e hidratação"
+  }'
+```
+
+---
+
+## 🚀 Próximas Implementações
+
+- [ ] Autenticação JWT com tokens
+- [ ] Paginação em listagens
+- [ ] Filtros avançados (especialização, data, etc.)
+- [ ] Soft deletes
+- [ ] Rate limiting
+- [ ] Documentação em Swagger/OpenAPI
