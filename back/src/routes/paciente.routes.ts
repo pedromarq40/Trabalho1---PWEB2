@@ -34,18 +34,19 @@ pacienteRouter.post('/', async (req: Request, res: Response) => {
         const data = req.body
         const senhaHash = await bcrypt.hash(data.senha, saltRound)
         data.senha = senhaHash
+        //if (data.dataDeNascimento) {data.dataDeNascimento = new Date(data.dataDeNascimento).toISOString()}
         await prisma.paciente.create({data:data})
         res.status(201).json({mensagem: "Paciente criado com sucesso"})
     }
     catch(error : any){
         if ( error.code === 'P2002'){
-            return res.status(409).json({erorr : "Já existe cpf ou email cadastrado"})
+            return res.status(409).json({error : "Este CPF ou Email já está cadastrado!"})
         }
         if (error.message && error.message.includes('PrismaClientValidationError')){
             return res.status(400).json({error : "Dados inválidos ou campos faltando"})
         }
         console.error(error)
-        return res.status(500).json({ error: "Erro interno ao tentar criar novo médico" })
+        return res.status(500).json({ error: "Erro interno ao tentar criar novo paciente" })
     }
 })
 

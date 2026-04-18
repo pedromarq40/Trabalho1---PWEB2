@@ -17,7 +17,7 @@ model Paciente {
   nome             String
   cpf              String        @unique
   email            String        @unique
-  telefone         String?       @unique
+  telefone         String?       
   altura           Decimal?
   peso             Decimal?
   dataDeNascimento DateTime?
