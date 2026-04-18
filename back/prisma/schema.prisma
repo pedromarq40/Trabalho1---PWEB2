@@ -29,8 +29,8 @@ model Paciente {
 model Medico {
   id               Int           @id @default(autoincrement())
   nome             String
-  email            String
-  cpf              String
+  email            String        @unique
+  cpf              String        @unique
   telefone         String
   especializacao   String
   dataDeNascimento DateTime
@@ -41,9 +41,9 @@ model Medico {
 
 model Atendimento {
   id         Int      @id @default(autoincrement())
-  medicoId   Int 
+  medicoId   Int
   pacienteId Int
-  prescricao String 
+  prescricao String
   medico     Medico   @relation(fields: [medicoId], references: [id])
   paciente   Paciente @relation(fields: [pacienteId], references: [id])
 }
