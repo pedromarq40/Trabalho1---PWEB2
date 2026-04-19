@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 
 interface RotaProtegidaProps{
     condicao: boolean,
@@ -7,7 +7,6 @@ interface RotaProtegidaProps{
 }
 
 export default function RotaProtegida({condicao, children, redirecionamento}: RotaProtegidaProps){
-    const navigate = useNavigate()
     if (condicao) return children
-    navigate(redirecionamento)
+    return <Navigate to={redirecionamento} replace />
 }

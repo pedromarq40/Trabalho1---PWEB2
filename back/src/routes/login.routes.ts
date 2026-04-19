@@ -13,7 +13,7 @@ loginRouter.post('/medico', async ( req : Request<{email : string}>, res : Respo
         if (!usuario) return res.status(401).json({mensagem : "Email Errado!"})
         const valido = await bcrypt.compare(senha, usuario.senha)
             if(valido){
-                res.status(200).json({mensagem : "Login Efetuado com Sucesso!"})
+                res.status(200).json({mensagem : "Login Efetuado com Sucesso!", id: usuario.id, email: usuario.email, nome: usuario.nome})
             }else{
                 res.status(401).json({mensagem : "Senha Errada!"})
             }
@@ -31,7 +31,7 @@ loginRouter.post('/paciente', async ( req : Request<{email : string}>, res : Res
         if (!usuario) return res.status(401).json({error : "Email Errado!"})
         const valido = await bcrypt.compare(senha, usuario.senha)
             if(valido){
-                res.status(200).json({mensagem : "Login Efetuado com Sucesso!"})
+                res.status(200).json({mensagem : "Login Efetuado com Sucesso!", id: usuario.id, email: usuario.email, nome: usuario.nome})
             }else{
                 res.status(401).json({mensagem : "Senha Errada!"})
             }

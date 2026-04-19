@@ -1,9 +1,12 @@
-import React, { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAxiosError } from 'axios'
 import api from '../service/api'
 
-export default function Login() {
+interface LoginProps{
+    setTipoLogin: Function
+}
+export default function Login({setTipoLogin}: LoginProps) {
     const navigate = useNavigate()
     
     // Novo estado para controlar quem está logando
@@ -25,32 +28,36 @@ export default function Login() {
     }
 
     async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setStatus('loading')
-    setErrorMessage('')
-    
-    try {
-        const rota = tipoUsuario === 'paciente' ? '/login/paciente' : '/login/medico'
-        const response = await api.post(rota, credenciais)
-        alert(response.data.mensagem)
-        navigate("/dashboard") 
+        e.preventDefault()
+        setStatus('loading')
+        setErrorMessage('')
         
-    } catch (error: unknown) {
-        setStatus('error')
-        
-        if (isAxiosError(error) && error.response?.data) {
-            const msgDaApi = error.response.data.mensagem
+        try {
+            const rota = tipoUsuario === 'paciente' ? '/login/paciente' : '/login/medico'
+            const response = await api.post(rota, credenciais)
+            alert(response.data.mensagem)
+            const destino = tipoUsuario === 'paciente' ? '/dashboard/paciente' : '/dashboard/medico'
+            localStorage.setItem('tipoLogin', tipoUsuario)
+            localStorage.setItem('userId', String(response.data.id))
+            setTipoLogin(tipoUsuario)
+            navigate(destino)
+        } 
+        catch (error: unknown) {
+            setStatus('error')
             
-            if (msgDaApi) {
-                setErrorMessage(msgDaApi)
+            if (isAxiosError(error) && error.response?.data) {
+                const msgDaApi = error.response.data.mensagem
+                
+                if (msgDaApi) {
+                    setErrorMessage(msgDaApi)
+                } else {
+                    setErrorMessage("Email ou senha incorretos. Tente novamente.")
+                }
             } else {
-                setErrorMessage("Email ou senha incorretos. Tente novamente.")
+                setErrorMessage("Erro de conexão com o servidor.")
             }
-        } else {
-            setErrorMessage("Erro de conexão com o servidor.")
+            console.error("Erro no login:", error)
         }
-        console.error("Erro no login:", error)
-    }
 }
 
     const temaPrincipal = tipoUsuario === 'paciente' 

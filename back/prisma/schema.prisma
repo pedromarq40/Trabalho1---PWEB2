@@ -40,10 +40,35 @@ model Medico {
 }
 
 model Atendimento {
-  id         Int      @id @default(autoincrement())
-  medicoId   Int
-  pacienteId Int
-  prescricao String
-  medico     Medico   @relation(fields: [medicoId], references: [id])
-  paciente   Paciente @relation(fields: [pacienteId], references: [id])
+  id           Int              @id @default(autoincrement())
+  medicoId     Int
+  pacienteId   Int
+  prescricao   String?
+  descricao    String?
+  status       AtendimentoStatus @default(PENDENTE)
+  dataCriacao  DateTime         @default(now())
+  atualizadoEm DateTime         @updatedAt
+  medico       Medico           @relation(fields: [medicoId], references: [id])
+  paciente     Paciente         @relation(fields: [pacienteId], references: [id])
+  mensagens    Mensagem[]
+}
+
+model Mensagem {
+  id           Int         @id @default(autoincrement())
+  atendimentoId Int
+  remetente    Remetente
+  texto        String
+  criadoEm     DateTime    @default(now())
+  atendimento  Atendimento @relation(fields: [atendimentoId], references: [id])
+}
+
+enum AtendimentoStatus {
+  PENDENTE
+  ACEITO
+  FINALIZADO
+}
+
+enum Remetente {
+  PACIENTE
+  MEDICO
 }
