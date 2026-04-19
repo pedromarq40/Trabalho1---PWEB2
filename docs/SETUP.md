@@ -1,102 +1,357 @@
 # Setup Rápido - MedSync
 
-## Pré-requisitos
-- Node.js 18+
-- npm
-- Git
+## ⏱️ Tempo Estimado: 10-15 minutos
 
-## Instalação
+## 📋 Pré-requisitos
 
-### 1. Clonar e Entrar no Projeto
+- **Node.js:** v18 ou superior
+- **npm:** v9 ou superior (incluso com Node.js)
+- **Git:** para clonar o repositório
+- **Terminal/Shell:** bash, zsh, ou cmd
+- **Porta 3000:** para o Backend (Express)
+- **Porta 5173:** para o Frontend (Vite)
+
+**Verificar as versões instaladas:**
 ```bash
-git clone <url-do-repositorio>
-cd projeto_pweb2
+$ node --version   # v18.x ou superior
+$ npm --version    # v9.x ou superior
+$ git --version    # git version 2.x ou superior
 ```
 
-### 2. Backend
+---
+
+## 🚀 Instalação Passo-a-Passo
+
+### 1️⃣ Clonar o Repositório
+
 ```bash
-cd back
-cp .env.example .env
-npm install
-npx prisma migrate dev
-npm run dev
+$ git clone <url-do-repositorio>
+$ cd TRABALHO-PWEB
 ```
-**URL:** http://localhost:3000
 
-### 3. Frontend (Novo Terminal)
-```bash
-cd front
-npm install
-npm run dev
-```
-**URL:** http://localhost:5173
-
-## Verificar
-- Backend: `curl http://localhost:3000/paciente/` → `[]`
-- Frontend: Abrir http://localhost:5173 no navegador
-
-## Problemas Comuns
-- Porta ocupada: `lsof -i :3000` e `kill -9 <PID>`
-- Dependências: `rm -rf node_modules && npm install`
-- Banco: `npx prisma migrate reset`
+### 2️⃣ Configurar Backend
 
 ```bash
-cd front
+# Entrar na pasta do backend
+$ cd back
+
+# Copiar arquivo de exemplo para .env
+$ cp .env.example .env
+
+# Verificar se .env possui:
+# DATABASE_URL="file:./dev.db"
 
 # Instalar dependências
-npm install
+$ npm install
 
-# Iniciar servidor de desenvolvimento
-npm run dev
+# Criar/atualizar o banco de dados
+$ npx prisma migrate dev
+
+# Iniciar servidor (deve rodar em http://localhost:3000)
+$ npm run dev
 ```
 
-O frontend estará rodando em: `http://localhost:5173`
+✅ **Verificação Backend:**
+```bash
+$ curl http://localhost:3000/paciente/
+# Resposta esperada: []
+```
 
-## Configuração do Ambiente
+### 3️⃣ Configurar Frontend (Novo Terminal)
 
-### Variáveis de Ambiente (Backend)
+```bash
+# Abrir novo terminal/aba
+# Voltar à raiz do projeto (se necessário)
+$ cd ../front
 
-O arquivo `.env` deve conter:
+# Instalar dependências
+$ npm install
+
+# Iniciar servidor de desenvolvimento (deve rodar em http://localhost:5173)
+$ npm run dev
+```
+
+✅ **Verificação Frontend:**
+- Abrir http://localhost:5173 no navegador
+- Deve carregar a página Home sem erros
+
+---
+
+## 🧪 Testando a Integração
+
+### 1. Acessar a Aplicação
+```
+Frontend: http://localhost:5173
+Backend:  http://localhost:3000
+```
+
+### 2. Testar Endpoints Principais
+
+**Listar Pacientes:**
+```bash
+$ curl http://localhost:3000/paciente/
+# Resposta: []
+```
+
+**Criar Paciente:**
+```bash
+$ curl -X POST http://localhost:3000/paciente/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "João Silva",
+    "cpf": "12345678900",
+    "email": "joao@test.com",
+    "telefone": "11987654321",
+    "altura": 1.75,
+    "peso": 80,
+    "dataDeNascimento": "1990-05-10",
+    "senha": "password123"
+  }'
+```
+
+**Login de Paciente:**
+```bash
+$ curl -X POST http://localhost:3000/login/paciente \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "joao@test.com",
+    "senha": "password123"
+  }'
+# Resposta esperada: {"mensagem": "Login Efetuado com Sucesso!"}
+```
+
+---
+
+## 🔧 Configuração do Ambiente
+
+### Backend - Variáveis de Ambiente
+
+Arquivo: `back/.env`
 
 ```env
-# URL do banco de dados SQLite
+# Database SQLite
 DATABASE_URL="file:./dev.db"
 ```
 
-### Arquivos de Configuração
+### Frontend - Variáveis de Ambiente
 
-- **Backend:**
-  - `tsconfig.json`: Configuração TypeScript
-  - `prisma/schema.prisma`: Esquema do banco
+Arquivo: `front/.env` (se necessário no futuro)
 
-- **Frontend:**
-  - `vite.config.ts`: Configuração Vite
-  - `tsconfig.json`: Configuração TypeScript
-  - `tailwind.config.js`: Configuração Tailwind CSS
-
-## Executando a Aplicação
-
-### Desenvolvimento
-
-1. **Backend:** `npm run dev` (pasta `back/`)
-2. **Frontend:** `npm run dev` (pasta `front/`)
-
-### Produção
-
-```bash
-# Frontend
-cd front
-npm run build
-npm run preview
-
-# Backend (não configurado para produção)
-cd back
-npm run build  # Se houver script
+```env
+# API Base URL (opcional, padrão: http://localhost:3000)
+VITE_API_URL=http://localhost:3000
 ```
 
-## Scripts Disponíveis
+---
+
+## 📝 Scripts Disponíveis
 
 ### Backend (`back/package.json`)
+
+```bash
+# Desenvolvimento - com hot reload
+$ npm run dev
+
+# Build TypeScript
+$ npm run build
+
+# Executar migrations do Prisma
+$ npx prisma migrate dev
+
+# Resetar banco (CUIDADO: deleta todos os dados)
+$ npx prisma migrate reset
+
+# Abrir Prisma Studio (visualizar DB)
+$ npx prisma studio
+```
+
+### Frontend (`front/package.json`)
+
+```bash
+# Desenvolvimento - com hot reload em http://localhost:5173
+$ npm run dev
+
+# Build para produção
+$ npm run build
+
+# Pré-visualizar build
+$ npm run preview
+
+# Lint com ESLint
+$ npm run lint
+```
+
+---
+
+## ⚠️ Problemas Comuns e Soluções
+
+### ❌ "EADDRINUSE: address already in use :::3000"
+
+**Problema:** Porta 3000 já está em uso
+
+**Solução:**
+```bash
+# Linux/Mac - Encontrar processo
+$ lsof -i :3000
+
+# Linux/Mac - Matar processo
+$ kill -9 <PID>
+
+# Windows - Encontrar processo
+$ netstat -ano | findstr :3000
+
+# Windows - Matar processo
+$ taskkill /PID <PID> /F
+```
+
+**Alternativa:** Mudar port no `server.ts` (antes de `npm run dev`)
+
+### ❌ "Cannot find module 'express'"
+
+**Problema:** Dependências não instaladas
+
+**Solução:**
+```bash
+$ rm -rf node_modules package-lock.json
+$ npm install
+```
+
+### ❌ "Prisma client not found"
+
+**Problema:** Prisma Cliente não foi gerado
+
+**Solução:**
+```bash
+$ npm install
+$ npx prisma generate
+```
+
+### ❌ "Database error / migration failed"
+
+**Problema:** Banco de dados corrompido ou migrations desincronizadas
+
+**Solução (PERDA DE DADOS):**
+```bash
+$ npx prisma migrate reset
+# Selecione 'y' quando perguntado
+```
+
+### ❌ Frontend não consegue conectar ao Backend
+
+**Problema:** CORS ou URL incorreta
+
+**Verificação:**
+1. Backend está rodando em `http://localhost:3000`?
+2. Frontend está tentando conectar em `http://localhost:3000`? (ver `front/src/service/api.ts`)
+3. Backend tem CORS habilitado?
+
+### ❌ "Port 5173 already in use"
+
+**Problema:** Porta do Vite ocupada
+
+**Solução:** Mudar porta em `front/vite.config.ts`:
+```typescript
+server: {
+  port: 5174  // Mudar para outra porta
+}
+```
+
+---
+
+## 🗄️ Gerenciando o Banco de Dados
+
+### Ver dados com Prisma Studio
+
+```bash
+$ cd back
+$ npx prisma studio
+# Abre em http://localhost:5555
+```
+
+### Criar nova migração após alterar schema
+
+```bash
+$ cd back
+
+# Edite prisma/schema.prisma
+
+# Crie a migração
+$ npx prisma migrate dev --name descricao_da_mudanca
+
+# Exemplo:
+$ npx prisma migrate dev --name adicionar_campo_endereco
+```
+
+### Resetar banco (deleta todos os dados)
+
+```bash
+$ cd back
+$ npx prisma migrate reset
+```
+
+---
+
+## 📦 Estrutura Instalada
+
+Após `npm install` em ambas as pastas:
+
+### Backend - Dependências Principais
+- `express` - Framework web
+- `prisma` - ORM para banco de dados
+- `@prisma/client` - Cliente Prisma
+- `bcrypt` - Hash de senhas
+- `typescript` - Suporte TypeScript
+- `cors` - Middleware CORS
+- `dotenv` - Variáveis de ambiente
+
+### Frontend - Dependências Principais
+- `react` - Biblioteca UI
+- `react-dom` - Renderização DOM
+- `react-router-dom` - Roteamento
+- `axios` - Cliente HTTP
+- `tailwindcss` - Framework CSS
+- `lucide-react` - Ícones
+- `typescript` - Suporte TypeScript
+- `vite` - Build tool
+
+---
+
+## ✨ Verificação Final
+
+Se tudo funcionou, você deve conseguir:
+
+- [ ] Backend rodando em `http://localhost:3000`
+- [ ] Frontend rodando em `http://localhost:5173`
+- [ ] `curl http://localhost:3000/paciente/` retorna `[]`
+- [ ] Frontend carrega página Home
+- [ ] Página de Login funciona
+- [ ] Prisma Studio acessível (opcional)
+
+---
+
+## 🆘 Ainda com Problemas?
+
+1. **Verifique logs:** Procure por mensagens de erro no terminal
+2. **Limpe cache:** `rm -rf node_modules && npm install`
+3. **Reset DB:** `npx prisma migrate reset`
+4. **Reinicie tudo:** Feche terminals, aguarde 5s, comece do zero
+
+---
+
+## 📖 Próximos Passos
+
+Após conseguir rodar a aplicação:
+
+1. Leia [ARCHITECTURE.md](ARCHITECTURE.md) para entender a estrutura
+2. Leia [API.md](API.md) para ver todos os endpoints
+3. Leia [DATABASE.md](DATABASE.md) para entender os modelos
+4. Comece a explorar e modificar o código!
+
+---
+
+## 🎉 Parabéns!
+
+Sua instância MedSync está pronta para desenvolvimento! 🚀
 
 ```json
 {

@@ -39,7 +39,6 @@ export default function Login() {
         setStatus('error')
         
         if (isAxiosError(error) && error.response?.data) {
-            // Aqui está a mágica: tenta pegar "error", se não achar, pega "mensagem"
             const msgDaApi = error.response.data.mensagem
             
             if (msgDaApi) {
@@ -54,7 +53,6 @@ export default function Login() {
     }
 }
 
-    // Variáveis dinâmicas de estilo para combinar com o tipo de usuário
     const temaPrincipal = tipoUsuario === 'paciente' 
         ? 'bg-sky-500 hover:bg-sky-400 shadow-[0_40px_120px_-40px_rgba(59,130,246,0.6)]' 
         : 'bg-emerald-500 hover:bg-emerald-400 shadow-[0_40px_120px_-40px_rgba(56,189,248,0.6)]'

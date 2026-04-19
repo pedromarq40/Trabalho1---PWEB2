@@ -27,39 +27,52 @@ O MedSync é uma aplicação web full-stack seguindo a arquitetura cliente-servi
 ## Estrutura de Diretórios
 
 ```
-projeto_pweb2/
+TRABALHO-PWEB/
 ├── back/                          # Backend Application
 │   ├── prisma/
-│   │   ├── schema.prisma         # Database Schema
-│   │   └── migrations/           # Database Migrations
+│   │   ├── schema.prisma         # Database Schema (Paciente, Medico, Atendimento)
+│   │   └── migrations/           # Database Migrations (11 migrações atuais)
 │   ├── src/
 │   │   ├── db/
-│   │   │   └── prisma.ts         # Database Connection
+│   │   │   └── prisma.ts         # Prisma Client
 │   │   ├── routes/
-│   │   │   ├── index.ts          # Main Router
-│   │   │   ├── paciente.routes.ts # Patient Routes
-│   │   │   └── medico.routes.ts   # Doctor Routes
+│   │   │   ├── index.ts          # Router Principal
+│   │   │   ├── paciente.routes.ts # GET/POST/PATCH Paciente
+│   │   │   ├── medico.routes.ts   # GET/POST/PATCH Médico
+│   │   │   ├── atendimento.routes.ts # GET/POST/PATCH Atendimento
+│   │   │   └── login.routes.ts    # POST Login (Paciente/Médico)
 │   │   └── server.ts             # Express Server
 │   ├── package.json
 │   ├── tsconfig.json
-│   └── .env.example
+│   └── .env.example (DATABASE_URL)
 ├── front/                         # Frontend Application
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── Header.tsx        # Application Header
-│   │   │   └── Protegida.tsx     # Protected Component
+│   │   │   ├── Header.tsx        # Navegação principal
+│   │   │   └── Protegida.tsx     # Protetor de rotas (futura)
 │   │   ├── pages/
 │   │   │   ├── Home.tsx          # Landing Page
-│   │   │   └── cadastroPaciente.tsx # Patient Registration
+│   │   │   ├── login.tsx         # Login (Paciente/Médico)
+│   │   │   ├── cadastroMedico.tsx # Registro de Médico
+│   │   │   └── cadastroPaciente.tsx # Registro de Paciente
 │   │   ├── service/
-│   │   │   └── api.ts            # API Configuration
-│   │   └── App.tsx               # Main App Component
-│   ├── public/                   # Static Assets
+│   │   │   └── api.ts            # Axios client (base URL: http://localhost:3000)
+│   │   ├── App.tsx               # Componente Raiz com React Router
+│   │   ├── main.tsx              # Ponto de entrada
+│   │   ├── index.css
+│   │   └── App.css
+│   ├── public/                   # Assets estáticos
 │   ├── package.json
 │   ├── vite.config.ts
-│   └── tsconfig.json
-├── docs/                          # Documentation
-└── README.md                      # Project README
+│   ├── tsconfig.json
+│   └── index.html
+├── docs/                          # Documentação
+│   ├── README.md                 # Índice da documentação
+│   ├── SETUP.md                  # Instalação e configuração
+│   ├── ARCHITECTURE.md           # Este arquivo
+│   ├── DATABASE.md               # Esquema do banco
+│   └── API.md                    # Endpoints REST
+└── README.md                      # README do projeto
 ```
 
 ## Fluxo de Dados
@@ -96,8 +109,146 @@ projeto_pweb2/
 
 ### Backend
 - **Repository Pattern:** Abstração do acesso a dados via Prisma
-- **Router Pattern:** Separação de rotas por domínio (paciente, médico)
+- **Router Pattern:** Separação de rotas por domínio (paciente, médico, atendimento, login)
 - **Middleware Pattern:** Uso de middlewares para CORS e JSON parsing
+- **Error Handling:** Tratamento de erros com códigos HTTP apropriados
+
+### Frontend
+- **Component-based:** Componentes reutilizáveis (Header, Protegida, etc.)
+- **SPA (Single Page Application):** Roteamento no lado do cliente com React Router
+- **State Management:** Estado local com React hooks
+- **API Client:** Camada de abstração com Axios
+
+---
+
+## 🛣️ Rotas do Frontend
+
+### Estrutura de Roteamento
+
+```
+/                          → Home (Landing Page)
+/login                     → Login (Paciente/Médico)
+/cadastro-paciente         → Registro de Paciente
+/cadastro-medico           → Registro de Médico
+/dashboard                 → Dashboard (página após login - futura)
+```
+
+### Detalhes das Rotas
+
+| Rota | Componente | Descrição | Autenticação |
+|------|-----------|-----------|--------------|
+| `/` | `Home.tsx` | Landing page com opções de cadastro/login | Não |
+| `/login` | `login.tsx` | Login com escolha Paciente/Médico | Não |
+| `/cadastro-paciente` | `cadastroPaciente.tsx` | Formulário de cadastro de paciente | Não |
+| `/cadastro-medico` | `cadastroMedico.tsx` | Formulário de cadastro de médico | Não |
+
+### Componentes Principais
+
+1. **Header.tsx**
+   - Navegação principal
+   - Links para Home, Login, Cadastro
+   - Gerenciamento de estado de autenticação
+
+2. **Protegida.tsx**
+   - Componente protetor de rotas
+   - Redireciona para login se não autenticado
+   - Será usado para rotas futuras (Dashboard, etc.)
+
+3. **login.tsx**
+   - Seletor de tipo de usuário (Paciente/Médico)
+   - Formulário de email e senha
+   - Integração com API `/login/paciente` e `/login/medico`
+   - Tratamento de erros com mensagens customizadas
+
+---
+
+## Fluxo de Autenticação (Frontend → Backend)
+
+```
+┌─────────────────────────────┐
+│   Página de Login (React)   │
+│  - Email + Senha            │
+│  - Tipo: Paciente/Médico    │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   POST /login/paciente ou   │
+│   POST /login/medico        │
+│   (via Axios)               │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Backend (Express Router)  │
+│   - Busca usuário por email │
+│   - bcrypt.compare()        │
+│   - Validação de senha      │
+└──────────────┬──────────────┘
+               │
+       ┌───────┴───────┐
+       ▼               ▼
+    ✅ Sucesso     ❌ Erro
+    (200)          (401)
+       │
+       ▼
+  Renderiza 
+  mensagem/erro
+  Redireciona
+  para dashboard
+```
+
+---
+
+## Dependências Principais
+
+### Backend
+- **express:** Framework web
+- **prisma:** ORM para banco de dados
+- **bcrypt:** Hash de senhas (v10 salt rounds)
+- **typescript:** Tipagem estática
+- **cors:** Middleware CORS
+
+### Frontend
+- **react:** Biblioteca UI
+- **react-router-dom:** Roteamento
+- **axios:** Cliente HTTP
+- **tailwind css:** Estilos
+- **lucide-react:** Ícones
+- **typescript:** Tipagem estática
+- **vite:** Build tool
+
+---
+
+## 🔒 Segurança Implementada
+
+✅ **Senhas Hashadas:**
+- Algoritmo: bcrypt
+- Salt Rounds: 10
+- Implementado em: `paciente.routes.ts`, `medico.routes.ts`, `login.routes.ts`
+
+✅ **Validação de Duplicatas:**
+- CPF único (paciente, médico)
+- Email único (paciente, médico)
+- Erro HTTP 409 para conflitos
+
+✅ **Tratamento de Erros:**
+- Mensagens específicas para diferentes falhas
+- Códigos HTTP apropriados
+- Logs de erro no console
+
+---
+
+## 📊 Diagrama de Estado da Aplicação
+
+```
+Não Autenticado         Autenticado
+    │                       │
+    ├─ Home          ├─ Dashboard
+    ├─ Login         ├─ Perfil
+    ├─ Cadastro      └─ Consultas
+    └─ Sobre
+```
 
 ### Frontend
 - **Component-Based Architecture:** Reutilização de componentes React
