@@ -3,20 +3,20 @@ import { useNavigate } from 'react-router-dom'
 import { isAxiosError } from 'axios'
 import api from '../service/api'
 
-interface LoginProps{
-    setTipoLogin: Function
+interface LoginProps {
+    setTipoLogin: (tipo: string) => void
 }
-export default function Login({setTipoLogin}: LoginProps) {
+
+export default function Login({ setTipoLogin }: LoginProps) {
     const navigate = useNavigate()
-    
-    // Novo estado para controlar quem está logando
+
     const [tipoUsuario, setTipoUsuario] = useState<'paciente' | 'medico'>('paciente')
-    
+
     const [credenciais, setCredenciais] = useState({
         email: "",
         senha: ""
     })
-    
+
     const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
     const [errorMessage, setErrorMessage] = useState('')
 
@@ -31,23 +31,24 @@ export default function Login({setTipoLogin}: LoginProps) {
         e.preventDefault()
         setStatus('loading')
         setErrorMessage('')
-        
+
         try {
             const rota = tipoUsuario === 'paciente' ? '/login/paciente' : '/login/medico'
             const response = await api.post(rota, credenciais)
-            alert(response.data.mensagem)
-            const destino = tipoUsuario === 'paciente' ? '/dashboard/paciente' : '/dashboard/medico'
-            localStorage.setItem('tipoLogin', tipoUsuario)
-            localStorage.setItem('userId', String(response.data.id))
+
+            // Salva o tipo e o userId no localStorage (usado pelo RotaProtegida e dashboards)
             setTipoLogin(tipoUsuario)
-            navigate(destino)
-        } 
-        catch (error: unknown) {
+            localStorage.setItem('userId', response.data.id)
+
+            alert(response.data.mensagem)
+            navigate(tipoUsuario === 'paciente' ? '/dashboard/paciente' : '/dashboard/medico')
+
+        } catch (error: unknown) {
             setStatus('error')
-            
+
             if (isAxiosError(error) && error.response?.data) {
                 const msgDaApi = error.response.data.mensagem
-                
+
                 if (msgDaApi) {
                     setErrorMessage(msgDaApi)
                 } else {
@@ -58,14 +59,14 @@ export default function Login({setTipoLogin}: LoginProps) {
             }
             console.error("Erro no login:", error)
         }
-}
+    }
 
-    const temaPrincipal = tipoUsuario === 'paciente' 
-        ? 'bg-sky-500 hover:bg-sky-400 shadow-[0_40px_120px_-40px_rgba(59,130,246,0.6)]' 
+    const temaPrincipal = tipoUsuario === 'paciente'
+        ? 'bg-sky-500 hover:bg-sky-400 shadow-[0_40px_120px_-40px_rgba(59,130,246,0.6)]'
         : 'bg-emerald-500 hover:bg-emerald-400 shadow-[0_40px_120px_-40px_rgba(56,189,248,0.6)]'
-        
-    const focoInput = tipoUsuario === 'paciente' 
-        ? 'focus:border-sky-400 focus:ring-sky-400/20' 
+
+    const focoInput = tipoUsuario === 'paciente'
+        ? 'focus:border-sky-400 focus:ring-sky-400/20'
         : 'focus:border-emerald-400 focus:ring-emerald-400/20'
 
     return (
@@ -86,8 +87,8 @@ export default function Login({setTipoLogin}: LoginProps) {
                         type="button"
                         onClick={() => setTipoUsuario('paciente')}
                         className={`flex-1 rounded-full py-2.5 text-sm font-semibold transition-all ${
-                            tipoUsuario === 'paciente' 
-                            ? 'bg-sky-500 text-slate-950 shadow-md' 
+                            tipoUsuario === 'paciente'
+                            ? 'bg-sky-500 text-slate-950 shadow-md'
                             : 'text-slate-400 hover:text-white'
                         }`}
                     >
@@ -97,8 +98,8 @@ export default function Login({setTipoLogin}: LoginProps) {
                         type="button"
                         onClick={() => setTipoUsuario('medico')}
                         className={`flex-1 rounded-full py-2.5 text-sm font-semibold transition-all ${
-                            tipoUsuario === 'medico' 
-                            ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                            tipoUsuario === 'medico'
+                            ? 'bg-emerald-500 text-slate-950 shadow-md'
                             : 'text-slate-400 hover:text-white'
                         }`}
                     >
@@ -150,8 +151,8 @@ export default function Login({setTipoLogin}: LoginProps) {
 
                 <div className="mt-8 text-center text-sm text-slate-400">
                     Ainda não tem conta?{' '}
-                    <button 
-                        onClick={() => navigate("/")} 
+                    <button
+                        onClick={() => navigate("/")}
                         className={`font-semibold transition ${tipoUsuario === 'paciente' ? 'text-sky-400 hover:text-sky-300' : 'text-emerald-400 hover:text-emerald-300'}`}
                     >
                         Voltar ao início
