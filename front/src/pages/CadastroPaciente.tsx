@@ -1,4 +1,5 @@
-import React, { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios'
 import api from '../service/api'
 
@@ -14,6 +15,7 @@ interface CadastroPaciente {
 }
 
 export default function CadastroPaciente() {
+    const navigate = useNavigate()
     const [dadosPaciente, setDadosPaciente] = useState<CadastroPaciente>({
         nome: "", cpf: "", email: "", telefone: "", altura: "", peso: "",
         dataDeNascimento: "", senha: ""

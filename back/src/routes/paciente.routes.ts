@@ -68,4 +68,29 @@ pacienteRouter.patch('/:id', async ( req : Request<{id : string}>, res : Respons
     }
 })
 
+pacienteRouter.post("/login", async (req: Request, res: Response) => {
+    try{
+        const { emailOrCpf, senha } = req.body
+        const paciente = await prisma.paciente.findFirst({
+            where: {
+                OR: [
+                    { email: emailOrCpf },
+                    { cpf: emailOrCpf }
+                ]
+            }
+        })
+        if (!paciente) {
+            return res.status(401).json({error: "Credenciais inválidas"})
+        }
+        if (paciente.senha !== senha) {
+            return res.status(401).json({error: "Credenciais inválidas"})
+        }
+        res.status(200).json({ mensagem: "Login efetuado com sucesso", paciente: { id: paciente.id, nome: paciente.nome, email: paciente.email } })
+    }
+    catch(error){
+        console.error(error)
+        res.status(500).json({error: "Erro ao tentar fazer login"})
+    }
+})
+
 export default pacienteRouter       
