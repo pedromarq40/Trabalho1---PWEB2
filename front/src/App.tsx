@@ -19,17 +19,17 @@ function App() {
         setTipoLoginState(value)
     }
 
-    return(
+    return (
         <>
             <BrowserRouter>
-                <Header/>
+                <Header />
                 <Routes>
-                    <Route path="/" element={<Home/>}/>
-                    <Route path="/cadastro-paciente" element={<CadastroPaciente/>}/>
-                    <Route path="/cadastro-medico" element={<CadastroMedico/>}/>
-                    <Route path="/login" element={<Login setTipoLogin={setTipoLogin}/>}/>
-                    <Route path="/dashboard/paciente" element={<RotaProtegida children={<DashboardPaciente/>} redirecionamento='/' condicao={tipoLogin === "paciente"}/>}/>
-                    <Route path="/dashboard/medico" element={<RotaProtegida children={<DashboardMedico/>} redirecionamento='/' condicao={tipoLogin === "medico"}/>}/>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/cadastro-paciente" element={<CadastroPaciente />} />
+                    <Route path="/cadastro-medico" element={<CadastroMedico />} />
+                    <Route path="/login" element={<Login setTipoLogin={setTipoLogin} />} />
+                    <Route path="/dashboard/paciente" element={<RotaProtegida children={<DashboardPaciente />} redirecionamento='/' condicao={tipoLogin === "paciente"} />} />
+                    <Route path="/dashboard/medico" element={<RotaProtegida children={<DashboardMedico />} redirecionamento='/' condicao={tipoLogin === "medico"} />} />
                 </Routes>
             </BrowserRouter>
         </>
