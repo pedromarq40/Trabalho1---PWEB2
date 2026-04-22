@@ -30,60 +30,61 @@ interface Atendimento {
 export default function DashboardPaciente() {
     const [medicos, setMedicos] = useState<Medico[]>([])
     const [atendimentos, setAtendimentos] = useState<Atendimento[]>([])
-    const [messages, setMessages] = useState<Mensagem[]>([])
-    const [selectedAtendimentoId, setSelectedAtendimentoId] = useState<number | null>(null)
-    const [searchTerm, setSearchTerm] = useState('')
-    const [chatText, setChatText] = useState('')
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
-    const [message, setMessage] = useState('')
+    const [mensagens, setMensagens] = useState<Mensagem[]>([])
+    const [idAtendimentoSelecionado, setIdAtendimentoSelecionado] = useState<number | null>(null)
+    const [termoBusca, setTermoBusca] = useState('')
+    const [textoChat, setTextoChat] = useState('')
+    const [carregando, setCarregando] = useState(true)
+    const [erro, setErro] = useState('')
+    const [mensagemSucesso, setMensagemSucesso] = useState('')
 
     const pacienteId = Number(localStorage.getItem('userId') ?? 0)
 
     useEffect(() => {
-        async function fetchData() {
+        async function buscarDados() {
             if (!pacienteId) return
 
             try {
-                setLoading(true)
-                const [medicosResponse, atendimentosResponse] = await Promise.all([
+                setCarregando(true)
+                const [respostaMedicos, respostaAtendimentos] = await Promise.all([
                     api.get<Medico[]>('/medico'),
                     api.get<Atendimento[]>(`/atendimento/paciente/${pacienteId}`)
                 ])
 
-                setMedicos(medicosResponse.data)
-                setAtendimentos(atendimentosResponse.data)
-                setError('')
-                const primeiroAtendimentoAceito = atendimentosResponse.data.find((item) => item.status === 'ACEITO')
-                setSelectedAtendimentoId(primeiroAtendimentoAceito ? primeiroAtendimentoAceito.id : null)
+                setMedicos(respostaMedicos.data)
+                setAtendimentos(respostaAtendimentos.data)
+                setErro('')
+                
+                const primeiroAtendimentoAceito = respostaAtendimentos.data.find((item) => item.status === 'ACEITO')
+                setIdAtendimentoSelecionado(primeiroAtendimentoAceito ? primeiroAtendimentoAceito.id : null)
             } catch (err) {
                 console.error(err)
-                setError('Não foi possível carregar os dados. Tente novamente mais tarde.')
+                setErro('Não foi possível carregar os dados. Tente novamente mais tarde.')
             } finally {
-                setLoading(false)
+                setCarregando(false)
             }
         }
 
-        fetchData()
+        buscarDados()
     }, [pacienteId])
 
     useEffect(() => {
-        async function fetchMessages() {
-            if (!selectedAtendimentoId) return
+        async function buscarMensagens() {
+            if (!idAtendimentoSelecionado) return
             try {
-                const response = await api.get<Mensagem[]>(`/mensagem/atendimento/${selectedAtendimentoId}`)
-                setMessages(response.data)
+                const resposta = await api.get<Mensagem[]>(`/mensagem/atendimento/${idAtendimentoSelecionado}`)
+                setMensagens(resposta.data)
             } catch (err) {
                 console.error(err)
-                setError('Não foi possível carregar as mensagens.')
+                setErro('Não foi possível carregar as mensagens.')
             }
         }
 
-        fetchMessages()
-    }, [selectedAtendimentoId])
+        buscarMensagens()
+    }, [idAtendimentoSelecionado])
 
     const medicosFiltrados = useMemo(() => {
-        const termo = searchTerm.toLowerCase().trim()
+        const termo = termoBusca.toLowerCase().trim()
         if (!termo) return medicos
 
         return medicos.filter((medico) =>
@@ -91,16 +92,16 @@ export default function DashboardPaciente() {
             medico.especializacao.toLowerCase().includes(termo) ||
             medico.email.toLowerCase().includes(termo)
         )
-    }, [medicos, searchTerm])
+    }, [medicos, termoBusca])
 
     const solicitacoesPendentes = atendimentos.filter((item) => item.status === 'PENDENTE')
     const atendimentosEmCurso = atendimentos.filter((item) => item.status === 'ACEITO')
-    const selectedAtendimento = atendimentos.find((item) => item.id === selectedAtendimentoId)
+    const atendimentoSelecionado = atendimentos.find((item) => item.id === idAtendimentoSelecionado)
 
-    async function refreshAtendimentos() {
+    async function atualizarAtendimentos() {
         if (!pacienteId) return
-        const response = await api.get<Atendimento[]>(`/atendimento/paciente/${pacienteId}`)
-        setAtendimentos(response.data)
+        const resposta = await api.get<Atendimento[]>(`/atendimento/paciente/${pacienteId}`)
+        setAtendimentos(resposta.data)
     }
 
     async function handleSolicitarAtendimento(medicoId: number) {
@@ -108,38 +109,38 @@ export default function DashboardPaciente() {
         if (!descricao?.trim()) return
 
         try {
-            setLoading(true)
+            setCarregando(true)
             await api.post('/atendimento', {
                 pacienteId,
                 medicoId,
                 descricao,
                 prescricao: ''
             })
-            setMessage('Solicitação enviada com sucesso.')
-            await refreshAtendimentos()
-            setError('')
+            setMensagemSucesso('Solicitação enviada com sucesso.')
+            await atualizarAtendimentos()
+            setErro('')
         } catch (err) {
             console.error(err)
-            setError('Não foi possível enviar a solicitação. Tente novamente.')
+            setErro('Não foi possível enviar a solicitação. Tente novamente.')
         } finally {
-            setLoading(false)
+            setCarregando(false)
         }
     }
 
-    async function handleSendMessage() {
-        if (!selectedAtendimentoId || !chatText.trim()) return
+    async function handleEnviarMensagem() {
+        if (!idAtendimentoSelecionado || !textoChat.trim()) return
         try {
             await api.post('/mensagem', {
-                atendimentoId: selectedAtendimentoId,
+                atendimentoId: idAtendimentoSelecionado,
                 remetente: 'PACIENTE',
-                texto: chatText.trim()
+                texto: textoChat.trim()
             })
-            setChatText('')
-            const response = await api.get<Mensagem[]>(`/mensagem/atendimento/${selectedAtendimentoId}`)
-            setMessages(response.data)
+            setTextoChat('')
+            const resposta = await api.get<Mensagem[]>(`/mensagem/atendimento/${idAtendimentoSelecionado}`)
+            setMensagens(resposta.data)
         } catch (err) {
             console.error(err)
-            setError('Não foi possível enviar a mensagem.')
+            setErro('Não foi possível enviar a mensagem.')
         }
     }
 
@@ -153,8 +154,8 @@ export default function DashboardPaciente() {
                     </div>
                 </header>
 
-                {error && <p className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</p>}
-                {message && <p className="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-200">{message}</p>}
+                {erro && <p className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-200">{erro}</p>}
+                {mensagemSucesso && <p className="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-200">{mensagemSucesso}</p>}
 
                 <div className="grid gap-8 lg:grid-cols-[1.4fr_0.75fr]">
                     <section className="space-y-6">
@@ -173,16 +174,16 @@ export default function DashboardPaciente() {
 
                             <div className="mt-6">
                                 <input
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    value={termoBusca}
+                                    onChange={(e) => setTermoBusca(e.target.value)}
                                     placeholder="Buscar por nome, especialidade ou email"
                                     className="w-full rounded-3xl border border-white/10 bg-slate-950/90 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
                                 />
                             </div>
 
                             <div className="mt-6 space-y-4">
-                                {loading && <p className="text-sm text-slate-300">Carregando médicos...</p>}
-                                {!loading && medicosFiltrados.length === 0 && <p className="text-sm text-slate-300">Nenhum médico encontrado.</p>}
+                                {carregando && <p className="text-sm text-slate-300">Carregando médicos...</p>}
+                                {!carregando && medicosFiltrados.length === 0 && <p className="text-sm text-slate-300">Nenhum médico encontrado.</p>}
                                 {medicosFiltrados.map((medico) => (
                                     <article key={medico.id} className="rounded-3xl border border-white/10 bg-slate-950/80 p-5 transition hover:border-sky-400/40 hover:bg-slate-900">
                                         <div className="flex items-center justify-between gap-4">
@@ -210,17 +211,17 @@ export default function DashboardPaciente() {
                             <h2 className="text-xl font-semibold text-white">Chat do atendimento</h2>
                             <p className="mt-2 text-sm leading-6 text-slate-400">Converse com o médico responsável pelo atendimento aceito.</p>
 
-                            {!selectedAtendimento && (
+                            {!atendimentoSelecionado && (
                                 <p className="mt-4 text-sm text-slate-300">Selecione um atendimento aceito para abrir o chat.</p>
                             )}
 
-                            {selectedAtendimento && (
+                            {atendimentoSelecionado && (
                                 <div className="mt-6 flex h-[450px] flex-col gap-4">
                                     <div className="flex-1 overflow-y-auto rounded-3xl border border-white/10 bg-slate-950/90 p-4">
-                                        {messages.length === 0 && <p className="text-sm text-slate-300">Nenhuma mensagem ainda. Envie a primeira mensagem.</p>}
-                                        {messages.map((msg) => (
+                                        {mensagens.length === 0 && <p className="text-sm text-slate-300">Nenhuma mensagem ainda. Envie a primeira mensagem.</p>}
+                                        {mensagens.map((msg) => (
                                             <div key={msg.id} className={`mt-4 rounded-3xl p-4 ${msg.remetente === 'PACIENTE' ? 'bg-sky-500/10 text-sky-100 self-end' : 'bg-slate-800/80 text-slate-100 self-start'}`}>
-                                                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{msg.remetente === 'PACIENTE' ? 'Você' : selectedAtendimento.medico.nome}</p>
+                                                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{msg.remetente === 'PACIENTE' ? 'Você' : atendimentoSelecionado.medico.nome}</p>
                                                 <p className="mt-2 text-sm leading-6">{msg.texto}</p>
                                                 <p className="mt-2 text-xs text-slate-500">{new Date(msg.criadoEm).toLocaleString()}</p>
                                             </div>
@@ -229,14 +230,14 @@ export default function DashboardPaciente() {
 
                                     <div className="flex flex-col gap-3">
                                         <textarea
-                                            value={chatText}
-                                            onChange={(e) => setChatText(e.target.value)}
+                                            value={textoChat}
+                                            onChange={(e) => setTextoChat(e.target.value)}
                                             rows={3}
                                             placeholder="Escreva sua mensagem..."
                                             className="w-full resize-none rounded-3xl border border-white/10 bg-slate-950/90 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
                                         />
                                         <button
-                                            onClick={handleSendMessage}
+                                            onClick={handleEnviarMensagem}
                                             className="w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-950 transition hover:bg-sky-400"
                                         >
                                             Enviar mensagem
@@ -260,8 +261,8 @@ export default function DashboardPaciente() {
                             </div>
 
                             <div className="mt-6 space-y-4">
-                                {loading && <p className="text-sm text-slate-300">Carregando solicitações...</p>}
-                                {!loading && solicitacoesPendentes.length === 0 && <p className="text-sm text-slate-300">Nenhuma solicitação pendente.</p>}
+                                {carregando && <p className="text-sm text-slate-300">Carregando solicitações...</p>}
+                                {!carregando && solicitacoesPendentes.length === 0 && <p className="text-sm text-slate-300">Nenhuma solicitação pendente.</p>}
                                 {solicitacoesPendentes.map((item) => (
                                     <div key={item.id} className="rounded-3xl border border-white/10 bg-slate-950/80 p-5">
                                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-300">#{item.id} - {item.medico.nome}</p>
@@ -284,13 +285,13 @@ export default function DashboardPaciente() {
                             </div>
 
                             <div className="mt-6 space-y-4">
-                                {!loading && atendimentosEmCurso.length === 0 && <p className="text-sm text-slate-300">Nenhum atendimento em curso.</p>}
+                                {!carregando && atendimentosEmCurso.length === 0 && <p className="text-sm text-slate-300">Nenhum atendimento em curso.</p>}
                                 {atendimentosEmCurso.map((item) => (
                                     <button
                                         key={item.id}
                                         type="button"
-                                        onClick={() => setSelectedAtendimentoId(item.id)}
-                                        className={`w-full rounded-3xl border p-5 text-left transition ${item.id === selectedAtendimentoId ? 'border-sky-500 bg-slate-900' : 'border-white/10 bg-slate-950/80 hover:border-sky-400/40'}`}
+                                        onClick={() => setIdAtendimentoSelecionado(item.id)}
+                                        className={`w-full rounded-3xl border p-5 text-left transition ${item.id === idAtendimentoSelecionado ? 'border-sky-500 bg-slate-900' : 'border-white/10 bg-slate-950/80 hover:border-sky-400/40'}`}
                                     >
                                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">#{item.id} - {item.medico.nome}</p>
                                         <p className="mt-3 text-sm text-slate-300">Motivo: {item.descricao || 'Sem descrição'}</p>
