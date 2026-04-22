@@ -1,16 +1,20 @@
 import { useNavigate } from 'react-router-dom';
 import { Stethoscope, LogOut } from 'lucide-react';
 
-export default function HomeHeaderFlex() {
+interface HeaderProps{
+    setTipoLogin: (a: string) => void
+}
+
+export default function HomeHeaderFlex({setTipoLogin}: HeaderProps) {
     const navigate = useNavigate()
 
     const tipoLogin = localStorage.getItem('tipoLogin') as 'paciente' | 'medico' | null
     const isAuthenticated = !!tipoLogin
 
     function handleLogout() {
-        localStorage.removeItem('tipoLogin')
+        setTipoLogin("")
         localStorage.removeItem('userId')
-        navigate('/login')
+        navigate('/')
     }
 
     const isPaciente = tipoLogin === 'paciente'

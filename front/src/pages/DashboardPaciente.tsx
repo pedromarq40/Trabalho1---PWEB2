@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import api from '../service/api'
 
 interface Medico {
@@ -29,7 +28,6 @@ interface Atendimento {
 }
 
 export default function DashboardPaciente() {
-    const navigate = useNavigate()
     const [medicos, setMedicos] = useState<Medico[]>([])
     const [atendimentos, setAtendimentos] = useState<Atendimento[]>([])
     const [messages, setMessages] = useState<Mensagem[]>([])
@@ -153,12 +151,6 @@ export default function DashboardPaciente() {
                         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-sky-300">Área do Paciente</p>
                         <h1 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">Buscar médico e conversar sobre atendimento</h1>
                     </div>
-                    <button
-                        onClick={() => navigate('/')}
-                        className="w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-950 transition hover:bg-sky-400 sm:w-auto"
-                    >
-                        Voltar ao início
-                    </button>
                 </header>
 
                 {error && <p className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</p>}

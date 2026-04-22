@@ -22,12 +22,12 @@ function App() {
     return (
         <>
             <BrowserRouter>
-                <Header />
+                <Header setTipoLogin={setTipoLogin}/>
                 <Routes>
-                    <Route path="/" element={<Home />} />
+                    <Route path="/" element={<RotaProtegida children={<Home/>} condicao={!tipoLogin.trim()} redirecionamento={`/dashboard/${tipoLogin}`}/>} />
                     <Route path="/cadastro-paciente" element={<CadastroPaciente />} />
                     <Route path="/cadastro-medico" element={<CadastroMedico />} />
-                    <Route path="/login" element={<Login setTipoLogin={setTipoLogin} />} />
+                    <Route path="/login" element={<RotaProtegida children={<Login setTipoLogin={setTipoLogin} />} condicao={!tipoLogin.trim()} redirecionamento={`/dashboard/${tipoLogin}`}/>} />
                     <Route path="/dashboard/paciente" element={<RotaProtegida children={<DashboardPaciente />} redirecionamento='/' condicao={tipoLogin === "paciente"} />} />
                     <Route path="/dashboard/medico" element={<RotaProtegida children={<DashboardMedico />} redirecionamento='/' condicao={tipoLogin === "medico"} />} />
                 </Routes>

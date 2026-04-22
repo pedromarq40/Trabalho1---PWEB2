@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import api from '../service/api'
 
 interface Paciente {
@@ -28,7 +27,6 @@ interface Atendimento {
 }
 
 export default function DashboardMedico() {
-    const navigate = useNavigate()
     const [atendimentos, setAtendimentos] = useState<Atendimento[]>([])
     const [messages, setMessages] = useState<Mensagem[]>([])
     const [selectedAtendimentoId, setSelectedAtendimentoId] = useState<number | null>(null)
@@ -129,12 +127,6 @@ export default function DashboardMedico() {
                             Veja solicitações pendentes, aceite atendimentos e converse com o paciente.
                         </p>
                     </div>
-                    <button
-                        onClick={() => navigate('/')}
-                        className="w-full rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-950 transition hover:bg-emerald-400 sm:w-auto"
-                    >
-                        Voltar ao início
-                    </button>
                 </header>
 
                 {error && <p className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</p>}
