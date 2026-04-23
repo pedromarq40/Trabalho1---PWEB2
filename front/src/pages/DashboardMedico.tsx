@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import api from '../service/api'
 
 interface Paciente {
     id: number
     nome: string
+    cpf: string
     email: string
     telefone?: string
+    altura?: number
+    peso?: number
+    dataDeNascimento?: string
 }
 
 interface Mensagem {
@@ -28,235 +31,212 @@ interface Atendimento {
 }
 
 export default function DashboardMedico() {
-    const navigate = useNavigate()
     const [atendimentos, setAtendimentos] = useState<Atendimento[]>([])
-    const [messages, setMessages] = useState<Mensagem[]>([])
-    const [selectedAtendimentoId, setSelectedAtendimentoId] = useState<number | null>(null)
-    const [chatText, setChatText] = useState('')
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
-    const [message, setMessage] = useState('')
+    const [mensagens, setMensagens] = useState<Mensagem[]>([])
+    const [idAtendimentoSelecionado, setIdAtendimentoSelecionado] = useState<number | null>(null)
+    const [textoChat, setTextoChat] = useState('')
+    const [carregando, setCarregando] = useState(true)
+    const [erro, setErro] = useState('')
+    const [mensagemSucesso, setMensagemSucesso] = useState('')
 
     const medicoId = Number(localStorage.getItem('userId') ?? 0)
 
     useEffect(() => {
-        async function fetchData() {
+        async function buscarDados() {
             if (!medicoId) return
-
             try {
-                setLoading(true)
-                const response = await api.get<Atendimento[]>(`/atendimento/medico/${medicoId}`)
-                setAtendimentos(response.data)
-                setError('')
-                const primeiroAtendimentoAceito = response.data.find((item) => item.status === 'ACEITO')
-                setSelectedAtendimentoId(primeiroAtendimentoAceito ? primeiroAtendimentoAceito.id : null)
+                setCarregando(true)
+                const resposta = await api.get<Atendimento[]>(`/atendimento/medico/${medicoId}`)
+                setAtendimentos(resposta.data)
+                
+                const primeiroAceito = resposta.data.find(a => a.status === 'ACEITO')
+                if (primeiroAceito) setIdAtendimentoSelecionado(primeiroAceito.id)
             } catch (err) {
-                console.error(err)
-                setError('Não foi possível carregar os atendimentos. Tente novamente.')
+                setErro('Erro ao carregar atendimentos.')
             } finally {
-                setLoading(false)
+                setCarregando(false)
             }
         }
-
-        fetchData()
+        buscarDados()
     }, [medicoId])
 
     useEffect(() => {
-        async function fetchMessages() {
-            if (!selectedAtendimentoId) return
+        async function buscarMensagens() {
+            if (!idAtendimentoSelecionado) return
             try {
-                const response = await api.get<Mensagem[]>(`/mensagem/atendimento/${selectedAtendimentoId}`)
-                setMessages(response.data)
+                const resposta = await api.get<Mensagem[]>(`/mensagem/atendimento/${idAtendimentoSelecionado}`)
+                setMensagens(resposta.data)
             } catch (err) {
-                console.error(err)
-                setError('Não foi possível carregar as mensagens.')
+                setErro('Erro ao carregar chat.')
             }
         }
+        buscarMensagens()
+    }, [idAtendimentoSelecionado])
 
-        fetchMessages()
-    }, [selectedAtendimentoId])
+    const pendentes = useMemo(() => atendimentos.filter(a => a.status === 'PENDENTE'), [atendimentos])
+    const emCurso = useMemo(() => atendimentos.filter(a => a.status === 'ACEITO'), [atendimentos])
+    const atendimentoSelecionado = atendimentos.find(a => a.id === idAtendimentoSelecionado)
 
-    const pendentes = useMemo(() => atendimentos.filter((item) => item.status === 'PENDENTE'), [atendimentos])
-    const emCurso = useMemo(() => atendimentos.filter((item) => item.status === 'ACEITO'), [atendimentos])
-    const selectedAtendimento = atendimentos.find((item) => item.id === selectedAtendimentoId)
-
-    async function refreshAtendimentos() {
-        if (!medicoId) return
-        const response = await api.get<Atendimento[]>(`/atendimento/medico/${medicoId}`)
-        setAtendimentos(response.data)
+    const calcularIMC = (peso?: number, altura?: number) => {
+        if (!peso || !altura || altura === 0) return 'N/A'
+        return (peso / (altura * altura)).toFixed(2)
     }
 
-    async function atualizarAtendimento(id: number, status: 'ACEITO' | 'FINALIZADO') {
+    async function atualizarStatus(id: number, status: 'ACEITO' | 'FINALIZADO') {
         try {
-            setLoading(true)
             await api.patch(`/atendimento/${id}`, { status })
-            await refreshAtendimentos()
-            setMessage(status === 'ACEITO' ? 'Atendimento aceito com sucesso.' : 'Atendimento finalizado com sucesso.')
-            setError('')
+            const resposta = await api.get<Atendimento[]>(`/atendimento/medico/${medicoId}`)
+            setAtendimentos(resposta.data)
+            setMensagemSucesso(`Atendimento ${status.toLowerCase()}!`)
         } catch (err) {
-            console.error(err)
-            setError('Não foi possível atualizar o atendimento. Tente novamente.')
-        } finally {
-            setLoading(false)
+            setErro('Erro ao atualizar status.')
         }
     }
 
-    async function handleSendMessage() {
-        if (!selectedAtendimentoId || !chatText.trim()) return
+    async function handleEnviarMensagem() {
+        if (!idAtendimentoSelecionado || !textoChat.trim()) return
         try {
             await api.post('/mensagem', {
-                atendimentoId: selectedAtendimentoId,
+                atendimentoId: idAtendimentoSelecionado,
                 remetente: 'MEDICO',
-                texto: chatText.trim()
+                texto: textoChat.trim()
             })
-            setChatText('')
-            const response = await api.get<Mensagem[]>(`/mensagem/atendimento/${selectedAtendimentoId}`)
-            setMessages(response.data)
+            setTextoChat('')
+            const resposta = await api.get<Mensagem[]>(`/mensagem/atendimento/${idAtendimentoSelecionado}`)
+            setMensagens(resposta.data)
         } catch (err) {
-            console.error(err)
-            setError('Não foi possível enviar a mensagem.')
+            setErro('Erro ao enviar mensagem.')
         }
     }
 
     return (
-        <main className="min-h-[calc(100vh-72px)] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white px-6 py-12">
-            <div className="mx-auto max-w-6xl space-y-8 rounded-[32px] border border-white/10 bg-slate-950/85 p-8 shadow-[0_35px_120px_-40px_rgba(16,185,129,0.75)] backdrop-blur-md sm:p-12">
-                <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-300">Área do Médico</p>
-                        <h1 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">Solicitações de atendimento</h1>
-                        <p className="mt-2 max-w-2xl text-base leading-7 text-slate-300">
-                            Veja solicitações pendentes, aceite atendimentos e converse com o paciente.
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => navigate('/')}
-                        className="w-full rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-950 transition hover:bg-emerald-400 sm:w-auto"
-                    >
-                        Voltar ao início
-                    </button>
-                </header>
+        <main className="min-h-[calc(100vh-72px)] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white px-4 py-8">
+            <div className="mx-auto max-w-[1400px] space-y-6">
+                
+                {/* ALERTAS */}
+                {erro && <p className="bg-rose-500/20 border border-rose-500/50 p-4 rounded-2xl text-rose-200">{erro}</p>}
+                {mensagemSucesso && <p className="bg-emerald-500/20 border border-emerald-500/50 p-4 rounded-2xl text-emerald-200">{mensagemSucesso}</p>}
 
-                {error && <p className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</p>}
-                {message && <p className="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-200">{message}</p>}
-
-                <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-                    <section className="space-y-6">
-                        <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-lg shadow-slate-950/20">
-                            <div className="flex items-center justify-between gap-4">
-                                <div>
-                                    <h2 className="text-xl font-semibold text-white">Solicitações pendentes</h2>
-                                    <p className="mt-2 text-sm leading-6 text-slate-400">Aprove ou recuse para iniciar o atendimento.</p>
-                                </div>
-                                <span className="inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
-                                    {pendentes.length}
-                                </span>
-                            </div>
-
-                            <div className="mt-6 space-y-4">
-                                {loading && <p className="text-sm text-slate-300">Carregando solicitações...</p>}
-                                {!loading && pendentes.length === 0 && <p className="text-sm text-slate-300">Nenhuma solicitação pendente.</p>}
-                                {pendentes.map((item) => (
-                                    <div key={item.id} className="rounded-3xl border border-white/10 bg-slate-950/80 p-5">
-                                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-300">#{item.id} - {item.paciente.nome}</p>
-                                        <p className="mt-3 text-sm text-slate-300">Motivo: {item.descricao || 'Sem descrição'}</p>
-                                        <p className="mt-2 text-sm text-slate-400">Email: {item.paciente.email}</p>
-                                        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                                            <button
-                                                onClick={() => atualizarAtendimento(item.id, 'ACEITO')}
-                                                className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-slate-950 transition hover:bg-emerald-400"
-                                            >
-                                                Aceitar
-                                            </button>
-                                        </div>
+                <div className="grid gap-6 lg:grid-cols-[350px_1fr_350px]">
+                    
+                    {/* COLUNA 1: SOLICITAÇÕES PENDENTES */}
+                    <aside className="space-y-6">
+                        <div className="rounded-[32px] border border-white/10 bg-slate-900/60 p-6 backdrop-blur-md">
+                            <h2 className="text-xl font-bold mb-4 flex justify-between items-center">
+                                Pendentes <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full">{pendentes.length}</span>
+                            </h2>
+                            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                                {pendentes.map(item => (
+                                    <div key={item.id} className="bg-slate-950/50 border border-white/5 p-4 rounded-2xl space-y-3">
+                                        <p className="font-bold text-sky-400">{item.paciente.nome}</p>
+                                        <p className="text-sm text-slate-400 line-clamp-2">{item.descricao}</p>
+                                        <button 
+                                            onClick={() => atualizarStatus(item.id, 'ACEITO')}
+                                            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition"
+                                        >
+                                            Aceitar
+                                        </button>
                                     </div>
                                 ))}
                             </div>
                         </div>
+                    </aside>
 
-                        <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-lg shadow-slate-950/20">
-                            <h2 className="text-xl font-semibold text-white">Chat do atendimento</h2>
-                            <p className="mt-2 text-sm leading-6 text-slate-400">Converse virtualmente com o paciente sobre o atendimento.</p>
-
-                            {!selectedAtendimento && (
-                                <p className="mt-4 text-sm text-slate-300">Selecione um atendimento aceito para abrir o chat.</p>
-                            )}
-
-                            {selectedAtendimento && (
-                                <div className="mt-6 flex h-[450px] flex-col gap-4">
-                                    <div className="flex-1 overflow-y-auto rounded-3xl border border-white/10 bg-slate-950/90 p-4">
-                                        {messages.length === 0 && <p className="text-sm text-slate-300">Nenhuma mensagem ainda. Envie a primeira mensagem.</p>}
-                                        {messages.map((msg) => (
-                                            <div key={msg.id} className={`mt-4 rounded-3xl p-4 ${msg.remetente === 'MEDICO' ? 'bg-emerald-500/10 text-emerald-100 self-end' : 'bg-slate-800/80 text-slate-100 self-start'}`}>
-                                                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{msg.remetente === 'MEDICO' ? 'Você' : selectedAtendimento.paciente.nome}</p>
-                                                <p className="mt-2 text-sm leading-6">{msg.texto}</p>
-                                                <p className="mt-2 text-xs text-slate-500">{new Date(msg.criadoEm).toLocaleString()}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="flex flex-col gap-3">
-                                        <textarea
-                                            value={chatText}
-                                            onChange={(e) => setChatText(e.target.value)}
-                                            rows={3}
-                                            placeholder="Escreva sua mensagem..."
-                                            className="w-full resize-none rounded-3xl border border-white/10 bg-slate-950/90 px-4 py-3 text-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
-                                        />
-                                        <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-                                            <button
-                                                onClick={handleSendMessage}
-                                                className="rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-950 transition hover:bg-emerald-400"
-                                            >
-                                                Enviar mensagem
-                                            </button>
-                                            {selectedAtendimento.status === 'ACEITO' && (
-                                                <button
-                                                    onClick={() => atualizarAtendimento(selectedAtendimento.id, 'FINALIZADO')}
-                                                    className="rounded-full bg-rose-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-950 transition hover:bg-rose-400"
-                                                >
-                                                    Finalizar atendimento
-                                                </button>
-                                            )}
+                    {/* COLUNA 2: DADOS DO PACIENTE E CHAT */}
+                    <section className="space-y-6">
+                        {atendimentoSelecionado ? (
+                            <>
+                                {/* PRONTUÁRIO DO PACIENTE */}
+                                <div className="rounded-[32px] border border-emerald-500/30 bg-slate-900/80 p-8 shadow-2xl">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                        <div className="col-span-2">
+                                            <p className="text-[10px] uppercase tracking-[0.2em] text-emerald-400 font-bold">Paciente em atendimento</p>
+                                            <h2 className="text-3xl font-black mt-1">{atendimentoSelecionado.paciente.nome}</h2>
+                                            <p className="text-slate-400 text-sm mt-1">CPF: {atendimentoSelecionado.paciente.cpf}</p>
+                                        </div>
+                                        <div className="text-right col-span-2">
+                                            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-1 rounded-full text-xs font-bold">SESSÃO ATIVA</span>
+                                        </div>
+                                        
+                                        <div className="bg-slate-950/50 p-4 rounded-2xl border border-white/5">
+                                            <p className="text-[10px] text-slate-500 uppercase font-bold">Altura</p>
+                                            <p className="text-xl font-bold text-sky-400">{atendimentoSelecionado.paciente.altura || '--'} m</p>
+                                        </div>
+                                        <div className="bg-slate-950/50 p-4 rounded-2xl border border-white/5">
+                                            <p className="text-[10px] text-slate-500 uppercase font-bold">Peso</p>
+                                            <p className="text-xl font-bold text-emerald-400">{atendimentoSelecionado.paciente.peso || '--'} kg</p>
+                                        </div>
+                                        <div className="bg-slate-950/50 p-4 rounded-2xl border border-emerald-500/20">
+                                            <p className="text-[10px] text-slate-500 uppercase font-bold">IMC Corporal</p>
+                                            <p className="text-xl font-bold">
+                                                {calcularIMC(atendimentoSelecionado.paciente.peso, atendimentoSelecionado.paciente.altura)}
+                                            </p>
+                                        </div>
+                                        <div className="bg-slate-950/50 p-4 rounded-2xl border border-white/5">
+                                            <p className="text-[10px] text-slate-500 uppercase font-bold">Nascimento</p>
+                                            <p className="text-sm font-bold mt-1">
+                                                {atendimentoSelecionado.paciente.dataDeNascimento ? new Date(atendimentoSelecionado.paciente.dataDeNascimento).toLocaleDateString() : 'N/A'}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    </section>
 
-                    <aside className="space-y-6">
-                        <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-lg shadow-slate-950/20">
-                            <div className="flex items-center justify-between gap-4">
-                                <div>
-                                    <h2 className="text-xl font-semibold text-white">Atendimentos em curso</h2>
-                                    <p className="mt-2 text-sm leading-6 text-slate-400">Veja os atendimentos aceitos que estão ativos.</p>
-                                </div>
-                                <span className="inline-flex rounded-full bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
-                                    {emCurso.length}
-                                </span>
-                            </div>
-
-                            <div className="mt-6 space-y-4">
-                                {!loading && emCurso.length === 0 && <p className="text-sm text-slate-300">Nenhum atendimento em curso.</p>}
-                                {emCurso.map((item) => (
-                                    <div key={item.id} className={`rounded-3xl border p-5 transition ${item.id === selectedAtendimentoId ? 'border-emerald-500 bg-slate-900' : 'border-white/10 bg-slate-950/80 hover:border-emerald-400/40'}`}>
-                                        <button
-                                            type="button"
-                                            onClick={() => setSelectedAtendimentoId(item.id)}
-                                            className="w-full text-left"
-                                        >
-                                            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">#{item.id} - {item.paciente.nome}</p>
-                                            <p className="mt-3 text-sm text-slate-300">Motivo: {item.descricao || 'Sem descrição'}</p>
-                                            <p className="mt-2 text-sm text-slate-400">Email: {item.paciente.email}</p>
-                                        </button>
-                                        <button
-                                            onClick={() => atualizarAtendimento(item.id, 'FINALIZADO')}
-                                            className="mt-4 inline-flex rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-slate-950 transition hover:bg-rose-400"
-                                        >
-                                            Finalizar
+                                {/* CHAT */}
+                                <div className="rounded-[32px] border border-white/10 bg-slate-900/40 p-6 flex flex-col h-[500px]">
+                                    <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                                        {mensagens.map(msg => (
+                                            <div key={msg.id} className={`flex flex-col ${msg.remetente === 'MEDICO' ? 'items-end' : 'items-start'}`}>
+                                                <div className={`max-w-[80%] p-4 rounded-2xl text-sm ${msg.remetente === 'MEDICO' ? 'bg-emerald-500 text-slate-950 rounded-tr-none' : 'bg-slate-800 text-white rounded-tl-none'}`}>
+                                                    {msg.texto}
+                                                </div>
+                                                <span className="text-[10px] text-slate-500 mt-1">{new Date(msg.criadoEm).toLocaleTimeString()}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-4 flex gap-2">
+                                        <input 
+                                            value={textoChat} 
+                                            onChange={e => setTextoChat(e.target.value)}
+                                            placeholder="Digite uma mensagem ou orientação..."
+                                            className="flex-1 bg-slate-950 border border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-emerald-500 transition"
+                                        />
+                                        <button onClick={handleEnviarMensagem} className="bg-emerald-500 p-4 rounded-2xl text-slate-950 hover:bg-emerald-400 transition">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                                         </button>
                                     </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="h-full flex items-center justify-center border-2 border-dashed border-white/5 rounded-[32px]">
+                                <p className="text-slate-500">Selecione um atendimento para visualizar os dados e o chat.</p>
+                            </div>
+                        )}
+                    </section>
+
+                    {/* COLUNA 3: ATENDIMENTOS ATIVOS */}
+                    <aside className="space-y-6">
+                        <div className="rounded-[32px] border border-white/10 bg-slate-900/60 p-6 backdrop-blur-md">
+                            <h2 className="text-xl font-bold mb-4">Em Curso</h2>
+                            <div className="space-y-3">
+                                {emCurso.map(item => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => setIdAtendimentoSelecionado(item.id)}
+                                        className={`w-full p-4 rounded-2xl text-left border transition ${item.id === idAtendimentoSelecionado ? 'bg-emerald-500/10 border-emerald-500' : 'bg-slate-950/30 border-white/5 hover:border-white/20'}`}
+                                    >
+                                        <p className="font-bold text-sm">{item.paciente.nome}</p>
+                                        <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest">ID #{item.id}</p>
+                                        <button 
+                                            onClick={(e) => { 
+                                                e.stopPropagation()
+                                                atualizarStatus(item.id, 'FINALIZADO')
+                                                setIdAtendimentoSelecionado(null)
+                                            }}
+                                            className="mt-3 text-[10px] font-bold text-rose-400 hover:text-rose-300 uppercase"
+                                        >
+                                            Finalizar Atendimento
+                                        </button>
+                                    </button>
                                 ))}
                             </div>
                         </div>
