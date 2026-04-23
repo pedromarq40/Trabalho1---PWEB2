@@ -139,6 +139,43 @@ Mesmo formato do paciente, apenas muda o endpoint para `/login/medico`
 
 ---
 
+## 🚪 Logout
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/logout/paciente` | Encerra a sessão do paciente |
+| POST | `/logout/medico` | Encerra a sessão do médico |
+
+### POST `/logout/paciente` - Logout de Paciente
+
+Acionado pelo botão de logout no header do dashboard do paciente.
+
+**Request:** _(sem body)_
+
+**Response (200) - Sucesso:**
+```json
+{
+  "mensagem": "Logout efetuado com sucesso!"
+}
+```
+
+### POST `/logout/medico` - Logout de Médico
+
+Acionado pelo botão de logout no header do dashboard do médico.
+
+**Request:** _(sem body)_
+
+**Response (200) - Sucesso:**
+```json
+{
+  "mensagem": "Logout efetuado com sucesso!"
+}
+```
+
+> ⚠️ **Nota:** Após o logout, o usuário é redirecionado para a tela de login correspondente. Com a implementação futura de JWT, este endpoint também será responsável por invalidar o token de acesso.
+
+---
+
 ## 📅 Atendimentos
 
 | Método | Endpoint | Descrição |
@@ -226,6 +263,16 @@ curl -X POST http://localhost:3000/login/paciente \
   }'
 ```
 
+### Logout de Paciente
+```bash
+curl -X POST http://localhost:3000/logout/paciente
+```
+
+### Logout de Médico
+```bash
+curl -X POST http://localhost:3000/logout/medico
+```
+
 ### Criar Atendimento
 ```bash
 curl -X POST http://localhost:3000/atendimento/ \
@@ -242,6 +289,7 @@ curl -X POST http://localhost:3000/atendimento/ \
 ## 🚀 Próximas Implementações
 
 - [ ] Autenticação JWT com tokens
+- [ ] Invalidação de token no logout
 - [ ] Paginação em listagens
 - [ ] Filtros avançados (especialização, data, etc.)
 - [ ] Soft deletes
